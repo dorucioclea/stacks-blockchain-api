@@ -8,15 +8,20 @@ pox_sync_sample_secs = 0
 
 [burnchain]
 chain = "bitcoin"
-mode = "krypton"
+mode = "helium"
 peer_host = "bitcoind"
 # Connect to puppet
 rpc_port = 18443
 # Connect direct to bitcoind (no firewall)
 peer_port = 18444
 magic_byte = "X2"
-username = "btc"
-password = "btc"
+username = "blockstack"
+password = "blockstack"
+timeout = 30
+local_mining_public_key = "04ee0b1602eb18fef7986887a7e8769a30c9df981d33c8380d255edef003abdcd243a0eb74afdf6740e6c423e62aec631519a24cf5b1d62bf8a3e06ddc695dcb77"
+burnchain_op_tx_fee = 1000
+commit_anchor_block_within = 3000
+
 
 [[ustx_balance]]
 address = "STB44HYPYAT2BB2QE513NSP81HTMYWBJP02HPGK6"
