@@ -1,5 +1,30 @@
 version: '3.7'
 services:
+
+  bitcoind:
+    build:
+      context: ./stacks-blockchain/bitcoin
+    ports:
+      - "18443:18443"
+      - "18444:18444"
+    command: 
+      -chain=regtest
+      -disablewallet=0
+      -printtoconsole
+      -txindex=1
+      -server=1
+      -rpcallowip=0.0.0.0/0
+      -rpcbind=0.0.0.0
+      -rpcuser=blockstack
+      -rpcpassword=blockstack
+  bitcoind-fill-faucet:
+    image: "byrnedo/alpine-curl"
+    depends_on:
+      - bitcoind
+    restart: on-failure
+    command: |
+      -f -u blockstack:blockstack --data-binary '{"jsonrpc": "1.0", "id":"c", "method": "generatetoaddress", "params": [110, "mrzLDS7LT3otAnpiRWGYkWipdnAZJaXAZQ"] }' -H 'content-type: text/plain;' http://bitcoind:18443/
+
   postgres:
     image: "postgres:12.2"
     ports:
@@ -14,7 +39,7 @@ services:
   stacks-blockchain:
     build:
       context: ./stacks-blockchain/docker
-    command: stacks-node start --config=/app/config/Stacks-follower.toml
+    command: stacks-node start --config=/app/config/Stacks-local.toml
     restart: on-failure
     environment:
       STACKS_EVENT_OBSERVER: stacks-blockchain-api:3700
@@ -28,6 +53,19 @@ services:
       - ./stacks-blockchain/.chaindata:/tmp/stacks-blockchain-data
     networks:
       - backend
+    depends_on:
+      - bitcoind-fill-faucet
+  explorer:
+    image: blockstack/explorer
+    container_name: explorer
+    environment:
+      - MOCKNET_API_SERVER=http://localhost:3999
+    ports:
+      - 3000:3000
+    networks:
+      - backend
+    depends_on: 
+      - stacks-blockchain-api
   stacks-blockchain-api:
     build:
       context: .
@@ -46,6 +84,7 @@ services:
       STACKS_CORE_RPC_HOST: stacks-blockchain
       STACKS_CORE_RPC_PORT: 20443
       NODE_ENV: development
+      STACKS_CHAIN_ID: 0x80000000
     ports:
       - "3999:3999"
       - "9153:9153"
